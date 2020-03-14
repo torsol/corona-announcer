@@ -1,29 +1,54 @@
 import requests
 import json
-from datetime import date
 import time
 import pygame
+from datetime import datetime
 
-def play_sound():
+def play_sound(case_type):
+    load_sound(case_type)
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         continue
 
+def load_sound(case_type):
+    sounds = {
+        'confirmed': 'toilet.mp3',
+        'dead': 'lacrimosa.mp3',
+    }
+    pygame.mixer.music.load(sounds[case_type])
 
-def fetch_data(): return json.loads(requests.get('https://www.vg.no/spesial/2020/corona-viruset/data/norway/').text)[
-        "timeseries"]["total"]["confirmed"][str(date.today())]
+def fetch_data():
+    endpoint_url = 'https://www.vg.no/spesial/2020/corona-viruset/data/norway/'
+    body = requests.get(endpoint_url).text
+    root = json.loads(body)
+    totals= root["totals"]
+    confirmed = totals["confirmed"]
+    dead = totals["dead"]
+    return (confirmed, dead)
 
 pygame.mixer.init()
-pygame.mixer.music.load("toilet.mp3")
-play_sound()
+play_sound('confirmed')
 
-number = fetch_data()
-while(True):
+print()
+
+confirmed, dead = fetch_data()
+
+while True:
     time.sleep(5)
-    new_number = fetch_data()
-    if(number < new_number):
-        number = new_number
-        print("updated: " + str(number))
-        play_sound()
-    else:
-        print("not updated: " + str(number))
+    new_confirmed, new_dead = fetch_data()
+
+    print(datetime.now())
+    print(f"Total confirmed cases: {new_confirmed}")
+    print(f"Total death toll: {new_dead}")
+
+    if confirmed < new_confirmed:
+        print(f"New confirmed cases: {new_confirmed - confirmed}")
+        confirmed = new_confirmed
+        play_sound('confirmed')
+    elif dead < new_dead:
+        print(f"New mortalities: {new_dead - dead}")
+        dead = new_dead
+        play_sound('dead')
+
+    print()
+

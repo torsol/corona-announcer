@@ -21,7 +21,7 @@ def fetch_data():
     endpoint_url = 'https://www.vg.no/spesial/2020/corona-viruset/data/norway/'
     body = requests.get(endpoint_url).text
     root = json.loads(body)
-    totals= root["totals"]
+    totals = root["totals"]
     confirmed = totals["confirmed"]
     dead = totals["dead"]
     return (confirmed, dead)

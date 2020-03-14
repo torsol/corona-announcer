@@ -31,24 +31,30 @@ play_sound('confirmed')
 
 print()
 
+ran_once = False
 confirmed, dead = fetch_data()
 
 while True:
     time.sleep(5)
     new_confirmed, new_dead = fetch_data()
 
+    if [confirmed, dead] == [new_confirmed, new_dead] and ran_once:
+        continue
+
     print(datetime.now())
     print(f"Total confirmed cases: {new_confirmed}")
     print(f"Total death toll: {new_dead}")
 
-    if confirmed < new_confirmed:
-        print(f"New confirmed cases: {new_confirmed - confirmed}")
-        confirmed = new_confirmed
-        play_sound('confirmed')
-    elif dead < new_dead:
+    if dead < new_dead:
         print(f"New mortalities: {new_dead - dead}")
         dead = new_dead
         play_sound('dead')
+    elif confirmed < new_confirmed:
+        print(f"New confirmed cases: {new_confirmed - confirmed}")
+        confirmed = new_confirmed
+        play_sound('confirmed')
 
     print()
+
+    ran_once = True
 

@@ -45,15 +45,15 @@ while True:
     print(f"Total confirmed cases: {new_confirmed}")
     print(f"Total death toll: {new_dead}")
 
-    if dead < new_dead:
-        print(f"New mortalities: {new_dead - dead}")
-        dead = new_dead
-        play_sound('dead')
-
     if confirmed < new_confirmed:
         print(f"New confirmed cases: {new_confirmed - confirmed}")
         confirmed = new_confirmed
         play_sound('confirmed')
+
+    if dead < new_dead:
+        print(f"New mortalities: {new_dead - dead}")
+        dead = new_dead
+        play_sound('dead')
 
     print()
 

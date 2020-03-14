@@ -49,7 +49,8 @@ while True:
         print(f"New mortalities: {new_dead - dead}")
         dead = new_dead
         play_sound('dead')
-    elif confirmed < new_confirmed:
+
+    if confirmed < new_confirmed:
         print(f"New confirmed cases: {new_confirmed - confirmed}")
         confirmed = new_confirmed
         play_sound('confirmed')

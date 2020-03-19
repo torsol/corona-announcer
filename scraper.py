@@ -37,44 +37,65 @@ def fetch_population_data(): return json.loads(requests.get(
 def get_total_contaminated(data): return data["metadata"]["confirmed"]["total"]
 def get_total_dead(data): return data["metadata"]["dead"]["total"]
 
+
+log_info = True
+
+sources = {
+    "hospital_data": {
+        'getter':fetch_hospital_data,
+        'data': "None"
+    },
+    "population_data": {
+        'getter':fetch_population_data,
+        'data': "None"
+    },
+}
+
+
 # Run soundcheck
 pygame.mixer.init()
 play_text("Startup")
 
 # Get data
-hospital_data = fetch_hospital_data()
-population_data = fetch_population_data()
+for source in sources:
+    sources[source]['data']=sources[source]['getter']()
 
 statistics = {
     "contaminated": {
         "total": 0,
-        "getter": get_total_contaminated(population_data),
+        "data_source": 'population_data',
+        "getter": get_total_contaminated,
         "announce": 'Contaminated: '
     },
     "dead": {
         "total": 0,
-        "getter": get_total_dead(population_data),
+        "data_source": 'population_data',
+        "getter": get_total_dead,
         "announce": 'Total dead: '
     },
     "hospitalized": {
         "total": 0,
-        "getter": get_hospitalized_data(hospital_data),
+        "data_source": 'hospital_data',
+        "getter": get_hospitalized_data,
         "announce": 'Hospitalized: '
     },
     "respiratory": {
         "total": 0,
-        "getter": get_respiratory_data(hospital_data),
+        "data_source": 'hospital_data',
+        "getter": get_respiratory_data,
         "announce": 'People in respiration: '
     },
     "infected_employees": {
         "total": 0,
-        "getter": get_infectedEmployees_data(hospital_data),
-        "announce": 'Infected employees: '
+        "data_source": 'hospital_data',
+        "getter": get_infectedEmployees_data,
+        "announce": 'Infected hospital employees: '
     },
     "quarantine_employees": {
         "total": 0,
-        "getter": get_quarantineEmployees_data(hospital_data),
-        "announce": 'Quarantied employees: '
+        "data_source": 'hospital_data',
+        "getter": get_quarantineEmployees_data,
+        "announce": 'Quarantied hospital employees: '
     },
     
 }
@@ -83,11 +104,18 @@ while(True):
     # Run checks every 5 seconds
     time.sleep(5)
 
-    # Fetch recent data
-    population_data = fetch_population_data()
-    hospital_data = fetch_hospital_data()
+    # Get data
+    for source in sources:
+        sources[source]['data']=sources[source]['getter']()
+
+    if(log_info): print('---' + time.strftime("%H:%M:%S", time.localtime()) + '---')
 
     for statistic in statistics:
-        if(statistics[statistic]['total'] < statistics[statistic]['getter']):
-            statistics[statistic]['total'] = statistics[statistic]['getter']
+        if(log_info): print(statistics[statistic]['announce']+str(statistics[statistic]['total']))
+
+        # get datasource
+        data = sources[statistics[statistic]['data_source']]['data']
+
+        if(statistics[statistic]['total'] < statistics[statistic]['getter'](data)):
+            statistics[statistic]['total'] = statistics[statistic]['getter'](data)
             play_text(statistics[statistic]['announce']+str(statistics[statistic]['total']))

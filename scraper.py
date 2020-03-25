@@ -39,6 +39,7 @@ def get_total_dead(data): return data["metadata"]["dead"]["total"]
 
 
 log_info = True
+is_raspi = False
 
 sources = {
     "hospital_data": {
@@ -55,6 +56,8 @@ sources = {
 # Run soundcheck
 pygame.mixer.init()
 play_text("Startup")
+
+if is_raspi: time.sleep(20)
 
 # Get data
 for source in sources:
@@ -116,6 +119,9 @@ while(True):
         # get datasource
         data = sources[statistics[statistic]['data_source']]['data']
 
-        if(statistics[statistic]['total'] < statistics[statistic]['getter'](data)):
+        if(statistics[statistic]['total'] != statistics[statistic]['getter'](data)):
+            denominator = ' increased by '
+            step = abs(statistics[statistic]['total'] - statistics[statistic]['getter'](data))
+            if(statistics[statistic]['total'] > statistics[statistic]['getter'](data)): denominator = ' reduced by '
             statistics[statistic]['total'] = statistics[statistic]['getter'](data)
-            play_text(statistics[statistic]['announce']+str(statistics[statistic]['total']))
+            play_text(statistics[statistic]['announce']+denominator+str(step))

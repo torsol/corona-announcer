@@ -36,7 +36,7 @@ def get_timestamp():
 
 log_info = True
 is_raspi = False
-play_first = True
+play_first = False
 
 # Run soundcheck
 pygame.mixer.init()
@@ -60,8 +60,9 @@ while True:
         
         if value != last_value:
 
-            if last_value == None and play_first:
-                play_text(f"{announce} initialized to {value}")
+            if last_value == None:
+                if play_first:
+                    play_text(f"{announce} initialized to {value}")
                 continue
                 
             denominator = "increased" if value > last_value else "decreased"

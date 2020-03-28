@@ -1,0 +1,39 @@
+{
+    "sources": [
+        {
+            "key": "hospital_data",
+            "url": "https://redutv-api.vg.no/corona/v1/hospitalized"
+        },
+        {
+            "key": "population_data",
+            "url": "https://redutv-api.vg.no/corona/v1/sheets/norway-region-data"
+        }
+    ],
+
+    "statistics": [
+        {
+            "announce": "Contaminated: ",
+            "path": "population_data.metadata.confirmed.total"
+        },
+        {
+            "announce": "Total dead: ",
+            "path": "population_data.metadata.dead.total"
+        },
+        {
+            "announce": "Hospitalized: ",
+            "path": "hospital_data.current.total.hospitalized"
+        },
+        {
+            "announce": "People in respiration: ",
+            "path": "hospital_data.current.total.respiratory"
+        },
+        {
+            "announce": "Infected hospital employees: ",
+            "path": "hospital_data.current.total.infectedEmployees"
+        },
+        {
+            "announce":"Quarantined hospital employees: ",
+            "path": "hospital_data.current.total.quarantineEmployees"
+        }
+    ]
+}

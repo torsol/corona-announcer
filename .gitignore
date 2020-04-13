@@ -1,3 +1,1 @@
-
-# ignore machine generated mp3-files
-*.mp3
+__pycache__/

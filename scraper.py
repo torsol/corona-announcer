@@ -1,57 +1,42 @@
-import requests
-import json
-from datetime import date
-import time
-import pygame
-import os 
 
+# Std libs
+import time
+import os
+from io import BytesIO
+
+from datetime import date
+
+# 3rd party libs
+import pygame
 from gtts import gTTS
 
-def play_text(text):
-    language = 'en'
+# Custom Libraries
+from data_source import DataSource
+
+
+def play_text(text, language="en"):
     speech = gTTS(text=text, lang=language, slow=False)
-    speech.save("temp.mp3")
-    play_sound('temp.mp3')
+    buf = BytesIO()
+    speech.write_to_fp(buf)
+    buf.seek(0)
+    play_sound(buf)
+
 
 def play_sound(soundFile):
     pygame.mixer.music.load(soundFile)
     pygame.mixer.music.play()
+
     while pygame.mixer.music.get_busy():
         continue
 
-# API for hospital-info
-def fetch_hospital_data(): return json.loads(requests.get(
-    'https://redutv-api.vg.no/corona/v1/hospitalized').text)
 
-# Get specific data from hospital-info
-def get_hospitalized_data(data): return data["current"]["total"]["hospitalized"] 
-def get_respiratory_data(data): return data["current"]["total"]["respiratory"]
-def get_infectedEmployees_data(data): return data["current"]["total"]["infectedEmployees"]
-def get_quarantineEmployees_data(data): return data["current"]["total"]["quarantineEmployees"]
-
-# API for general norway-info
-def fetch_population_data(): return json.loads(requests.get(
-    'https://redutv-api.vg.no/corona/v1/sheets/norway-region-data/').text)
-
-# Get specific data from norway-info
-def get_total_contaminated(data): return data["metadata"]["confirmed"]["total"]
-def get_total_dead(data): return data["metadata"]["dead"]["total"]
+def get_timestamp():
+    return time.strftime("%H:%M:%S", time.localtime())
 
 
 log_info = True
 is_raspi = False
-
-sources = {
-    "hospital_data": {
-        'getter':fetch_hospital_data,
-        'data': "None"
-    },
-    "population_data": {
-        'getter':fetch_population_data,
-        'data': "None"
-    },
-}
-
+play_first = False
 
 # Run soundcheck
 pygame.mixer.init()
@@ -59,69 +44,29 @@ play_text("Startup")
 
 if is_raspi: time.sleep(20)
 
-# Get data
-for source in sources:
-    sources[source]['data']=sources[source]['getter']()
+source = DataSource("config.json")
 
-statistics = {
-    "contaminated": {
-        "total": 0,
-        "data_source": 'population_data',
-        "getter": get_total_contaminated,
-        "announce": 'Contaminated: '
-    },
-    "dead": {
-        "total": 0,
-        "data_source": 'population_data',
-        "getter": get_total_dead,
-        "announce": 'Total dead: '
-    },
-    "hospitalized": {
-        "total": 0,
-        "data_source": 'hospital_data',
-        "getter": get_hospitalized_data,
-        "announce": 'Hospitalized: '
-    },
-    "respiratory": {
-        "total": 0,
-        "data_source": 'hospital_data',
-        "getter": get_respiratory_data,
-        "announce": 'People in respiration: '
-    },
-    "infected_employees": {
-        "total": 0,
-        "data_source": 'hospital_data',
-        "getter": get_infectedEmployees_data,
-        "announce": 'Infected hospital employees: '
-    },
-    "quarantine_employees": {
-        "total": 0,
-        "data_source": 'hospital_data',
-        "getter": get_quarantineEmployees_data,
-        "announce": 'Quarantied hospital employees: '
-    },
-    
-}
+while True:
 
-while(True):
-    # Run checks every 5 seconds
+    source.refresh_data()
+
+    if log_info:
+        print(f"---{get_timestamp()}---")
+
+    for value, last_value, announce in source:
+
+        if log_info:
+            print(f"{announce}{value}")
+        
+        if value != last_value:
+
+            if last_value == None:
+                if play_first:
+                    play_text(f"{announce} initialized to {value}")
+                continue
+                
+            denominator = "increased" if value > last_value else "decreased"
+            delta = abs(value - last_value)
+            play_text(f"{announce} {denominator} by {delta}")
+
     time.sleep(5)
-
-    # Get data
-    for source in sources:
-        sources[source]['data']=sources[source]['getter']()
-
-    if(log_info): print('---' + time.strftime("%H:%M:%S", time.localtime()) + '---')
-
-    for statistic in statistics:
-        if(log_info): print(statistics[statistic]['announce']+str(statistics[statistic]['total']))
-
-        # get datasource
-        data = sources[statistics[statistic]['data_source']]['data']
-
-        if(statistics[statistic]['total'] != statistics[statistic]['getter'](data)):
-            denominator = ' increased by '
-            step = abs(statistics[statistic]['total'] - statistics[statistic]['getter'](data))
-            if(statistics[statistic]['total'] > statistics[statistic]['getter'](data)): denominator = ' reduced by '
-            statistics[statistic]['total'] = statistics[statistic]['getter'](data)
-            play_text(statistics[statistic]['announce']+denominator+str(step))
